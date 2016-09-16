@@ -248,7 +248,7 @@ def heatmap(raw, axes=(0, 1), lower=None, upper=None):
     if u is None:
         u = raw.max() * 1.01
         u *= u > 0 and 1.01 or 0.99
-    return _image(raw, l, u, format)
+    return _image(raw, l, u, "L")#format)
 
 
 def colormap(raw, axes=(0, 1, 2), layers=(0, 1, 2)):

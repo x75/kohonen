@@ -47,7 +47,7 @@ import numpy.random as rng
 import optparse
 import sys
 
-import lmj.kohonen
+import kohonen.kohonen
 
 FLAGS = optparse.OptionParser()
 FLAGS.add_option('-v', '--verbose', action='store_true', help='Be more verbose')
@@ -90,7 +90,7 @@ class Controller(object):
                    for _ in xrange(10)) / 10
 
     def draw_neurons(self, ctx, viewer):
-        for c in lmj.kohonen.itershape(self.quantizer.shape):
+        for c in kohonen.kohonen.itershape(self.quantizer.shape):
             size = 2
             if hasattr(self.quantizer, 'activity'):
                 size = len(self.quantizer.activity) * self.quantizer.activity[c]
@@ -371,6 +371,7 @@ YELLOW = (0.7, 0.7, 0.3)
 
 
 if __name__ == '__main__':
+    print "enter main"
     opts, args = FLAGS.parse_args()
 
     logging.basicConfig(stream=sys.stdout,
@@ -378,34 +379,35 @@ if __name__ == '__main__':
                         format='%(levelname).1s %(asctime)s %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
 
-    ET = lmj.kohonen.ExponentialTimeseries
+    ET = kohonen.kohonen.ExponentialTimeseries
+    print "ET", ET
 
-    def kwargs(shape=(8, 8), z=0.2):
+    def kwargs(shape=(10, 10), z=0.2):
         return dict(dimension=2,
                     shape=shape,
                     learning_rate=ET(-5e-4, 1, 0.1),
                     noise_variance=z)
 
     kw = kwargs()
-    m = lmj.kohonen.Map(lmj.kohonen.Parameters(**kw))
+    m = kohonen.kohonen.Map(kohonen.kohonen.Parameters(**kw))
     m.reset()
 
     kw = kwargs((64, ))
-    g = lmj.kohonen.Gas(lmj.kohonen.Parameters(**kw))
+    g = kohonen.kohonen.Gas(kohonen.kohonen.Parameters(**kw))
     g.reset()
 
     kw = kwargs((64, ))
     kw['growth_interval'] = 7
     kw['max_connection_age'] = 17
-    gg = lmj.kohonen.GrowingGas(lmj.kohonen.GrowingGasParameters(**kw))
+    gg = kohonen.kohonen.GrowingGas(kohonen.kohonen.GrowingGasParameters(**kw))
     gg.reset()
 
     kw = kwargs()
-    fm = lmj.kohonen.Filter(lmj.kohonen.Map(lmj.kohonen.Parameters(**kw)))
+    fm = kohonen.kohonen.Filter(kohonen.kohonen.Map(kohonen.kohonen.Parameters(**kw)))
     fm.reset()
 
     kw = kwargs((64, ))
-    fg = lmj.kohonen.Filter(lmj.kohonen.Gas(lmj.kohonen.Parameters(**kw)))
+    fg = kohonen.kohonen.Filter(kohonen.kohonen.Gas(kohonen.kohonen.Parameters(**kw)))
     fg.reset()
 
     v = Viewer(opts,
