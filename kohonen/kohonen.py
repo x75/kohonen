@@ -702,6 +702,7 @@ class Filter(object):
         self.activity = _zeros(self.map.shape) + 1
         self.activity /= self.activity.sum()
         self._history = history is None and ConstantTimeseries(0.7) or history
+        self.distances_ = []
 
     @property
     def shape(self):
@@ -733,7 +734,14 @@ class Filter(object):
 
     def learn(self, cue, **kwargs):
         d = self.distances(cue)
-        p = numpy.exp(-self.distances(cue).argsort())
+        self.distances_.append(d.flatten())
+        # p = numpy.exp(-self.distances(cue).argsort())
+        p = numpy.exp(-self.distances(cue))
         l = self._history()
         self.activity = l * self.activity + (1 - l) * p / p.sum()
+        kwargs["distances"] = d
         self.map.learn(cue, **kwargs)
+
+    def learn2(self, cue, **kwargs):
+        """FIXME: do learn but also adapt the kernel width"""
+        pass
