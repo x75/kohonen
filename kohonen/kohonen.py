@@ -376,7 +376,9 @@ class Map(object):
         '''Initialize this Map.'''
         self._shape = params.shape
         self.dimension = params.dimension
+        self.numunits  = numpy.prod(self._shape)
         self.neurons = _zeros(self.shape + (self.dimension, ))
+        self.delta   = _zeros(self.shape + (self.dimension, ))
 
         self._metric = params.metric
 
@@ -431,7 +433,17 @@ class Map(object):
 
     def distances(self, cue):
         '''Get the distance of each neuron in the Map to a particular cue.'''
+        # maske sure that the input matches specified dimension, otherwise
+        # resize will do folding
+        if len(cue.shape) == 1:
+            assert cue.shape[0] == self.dimension
+        elif len(cue.shape) == 2:
+            assert cue.shape[1] == self.dimension
+        else:
+            raise ValueError
         z = numpy.resize(cue, self.neurons.shape)
+        # print("%s.learn cue.shape = %s, neurons.shape = %s, z.shape = %s, self.dim = %d" % (self.__class__.__name__, cue.shape, self.neurons.shape, z.shape, self.dimension))
+        # print("z = %s" % z)
         return self._metric(z, self.neurons)
 
     def flat_to_coords(self, i):
@@ -476,9 +488,12 @@ class Map(object):
             weights = self.weights(distances)
         assert weights.shape == self.shape
         weights.shape += (1, )
-        delta = numpy.resize(cue, self.neurons.shape) - self.neurons
+        self.delta = numpy.resize(cue, self.neurons.shape) - self.neurons
+        # print "|delta|", numpy.linalg.norm(delta, 2)
         eta = self._learning_rate()
-        self.neurons += eta * weights * delta
+        # print "eta", eta
+        # print "|delta|", eta * numpy.mean(numpy.abs(self.delta))
+        self.neurons += eta * weights * self.delta
         if self._noise_variance:
             self.neurons += rng.normal(
                 0, self._noise_variance(), self.neurons.shape)
@@ -731,12 +746,13 @@ class Filter(object):
 
     def sample(self, n):
         return argsample(self.activity, n)
-
+    
     def learn(self, cue, **kwargs):
+        # print("%s.learn cue.shape = %s, self.dim = %d" % (self.__class__.__name__, cue.shape, self.map.dimension))
         d = self.distances(cue)
         self.distances_.append(d.flatten())
         # p = numpy.exp(-self.distances(cue).argsort())
-        p = numpy.exp(-self.distances(cue))
+        p = numpy.exp(-self.distances(cue) * 20.0)
         l = self._history()
         self.activity = l * self.activity + (1 - l) * p / p.sum()
         kwargs["distances"] = d
