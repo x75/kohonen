@@ -303,6 +303,11 @@ def _zeros(shape, dtype='d'):
     '''Get a blank (all-zero) matrix with a certain shape.'''
     return numpy.zeros(shape, dtype=dtype)
 
+def _random(shape, dtype='d', lo = -1.0, hi = 1.0):
+    '''Get a blank (all-zero) matrix with a certain shape.'''
+    print "lo", lo, "hi", hi, "shape", shape
+    return numpy.random.uniform(lo, hi, shape) # .astype(dtype)
+
 
 def itershape(shape):
     '''Given a shape tuple, iterate over all indices in that shape.'''
@@ -378,6 +383,8 @@ class Map(object):
         self.dimension = params.dimension
         self.numunits  = numpy.prod(self._shape)
         self.neurons = _zeros(self.shape + (self.dimension, ))
+        # dimones = numpy.ones(self.shape + (self.dimension,))
+        # self.neurons = _random(self.shape + (self.dimension, ), dtype = 'd', lo = dimones * -1.0, hi = dimones * 1.0)
         self.delta   = _zeros(self.shape + (self.dimension, ))
 
         self._metric = params.metric
@@ -416,7 +423,7 @@ class Map(object):
         self._learning_rate.reset()
         self._neighborhood_size.reset()
         if f is None:
-            self.neurons = rng.randn(*self.neurons.shape)
+            self.neurons = rng.randn(*self.neurons.shape) * 1.0 # 0.1
         else:
             for z in itershape(self.shape):
                 self.neurons[z] = f(z)
@@ -482,14 +489,19 @@ class Map(object):
 
     def learn(self, cue, weights=None, distances=None):
         '''Add a new cue vector to the Map, moving neurons as needed.'''
+        # print "Map.learn cue", cue, "weights", weights, "distances", distances
         if weights is None:
             if distances is None:
                 distances = self.distances(cue)
             weights = self.weights(distances)
+        # print "Map.learn weights", weights
         assert weights.shape == self.shape
         weights.shape += (1, )
+        # print "Map.learn cue", cue, self.neurons.shape
+        # print "Map.learn cue_Resized", numpy.resize(cue, self.neurons.shape) - self.neurons
         self.delta = numpy.resize(cue, self.neurons.shape) - self.neurons
-        # print "|delta|", numpy.linalg.norm(delta, 2)
+        # print self.delta
+        # print "Map.learn |delta|", numpy.linalg.norm(self.delta, 2)
         eta = self._learning_rate()
         # print "eta", eta
         # print "|delta|", eta * numpy.mean(numpy.abs(self.delta))
