@@ -494,21 +494,23 @@ class Map(object):
             if distances is None:
                 distances = self.distances(cue)
             weights = self.weights(distances)
-        # print "Map.learn weights", weights
+        # print "Map.learn weights", numpy.sum(numpy.abs(weights))
         assert weights.shape == self.shape
         weights.shape += (1, )
         # print "Map.learn cue", cue, self.neurons.shape
         # print "Map.learn cue_Resized", numpy.resize(cue, self.neurons.shape) - self.neurons
         self.delta = numpy.resize(cue, self.neurons.shape) - self.neurons
-        # print self.delta
+        # print "Map.learn delta", self.delta.shape
         # print "Map.learn |delta|", numpy.linalg.norm(self.delta, 2)
         eta = self._learning_rate()
         # print "eta", eta
         # print "|delta|", eta * numpy.mean(numpy.abs(self.delta))
-        self.neurons += eta * weights * self.delta
+        dneurons = weights * self.delta
+        self.neurons += eta * dneurons
         if self._noise_variance:
             self.neurons += rng.normal(
                 0, self._noise_variance(), self.neurons.shape)
+        return dneurons
 
     def neuron_heatmap(self, axes=(0, 1), lower=None, upper=None):
         '''Return an image representation of this Map.'''
@@ -639,8 +641,10 @@ class GrowingGas(Gas):
 
         # move the winner and all of its neighbors toward the cue.
         eta = self._learning_rate()
+        dneuron = cue - self.neurons
         def adjust(i):
-            self.neurons[i] += eta * (cue - self.neurons[i])
+            # self.neurons[i] += eta * (cue - self.neurons[i])
+            self.neurons[i] += eta * dneurons[i]
         adjust(w)
         for j, age in enumerate(self.neighbors(w)):
             if 0 <= age < 65535:  # prevent 16-bit age counter overflow
@@ -661,6 +665,8 @@ class GrowingGas(Gas):
 
         # decrease unit error.
         self._errors *= self._error_decay
+
+        return dneurons
 
     def _prune(self):
         '''Remove old connections, and prune any disconnected neurons.'''
@@ -730,6 +736,8 @@ class Filter(object):
         self.activity /= self.activity.sum()
         self._history = history is None and ConstantTimeseries(0.7) or history
         self.distances_ = []
+        print "map", self.map.shape
+        self.sigmas = numpy.ones(self.map.shape + (self.map.dimension,))
 
     @property
     def shape(self):
@@ -764,11 +772,14 @@ class Filter(object):
         d = self.distances(cue)
         self.distances_.append(d.flatten())
         # p = numpy.exp(-self.distances(cue).argsort())
-        p = numpy.exp(-self.distances(cue) * 20.0)
+        p = numpy.exp(-self.distances(cue))# * 20.0) # FIXME: magic number?
         l = self._history()
         self.activity = l * self.activity + (1 - l) * p / p.sum()
         kwargs["distances"] = d
-        self.map.learn(cue, **kwargs)
+        dneurons = self.map.learn(cue, **kwargs)
+        # print numpy.sum(dneurons > 0)
+        modulator = dneurons > 0
+        self.sigmas[modulator] = 0.95 * self.sigmas[modulator] + 0.05 * numpy.abs(dneurons[modulator])
 
     def learn2(self, cue, **kwargs):
         """FIXME: do learn but also adapt the kernel width"""
