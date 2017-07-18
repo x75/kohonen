@@ -424,7 +424,7 @@ class Map(object):
         self._neighborhood_size.reset()
         if f is None:
             # self.neurons = rng.randn(*self.neurons.shape) * 0.8 # 0.1
-            self.neurons = rng.uniform(-1.0, 1.0, self.neurons.shape) * 1.5 # 0.8 # 0.1
+            self.neurons = rng.uniform(-1.0, 1.0, self.neurons.shape) * 1.0 # 1.5 # 0.8 # 0.1
         else:
             for z in itershape(self.shape):
                 self.neurons[z] = f(z)
