@@ -423,7 +423,8 @@ class Map(object):
         self._learning_rate.reset()
         self._neighborhood_size.reset()
         if f is None:
-            self.neurons = rng.randn(*self.neurons.shape) * 0.3 # 0.1
+            # self.neurons = rng.randn(*self.neurons.shape) * 0.8 # 0.1
+            self.neurons = rng.uniform(-1.0, 1.0, self.neurons.shape) * 1.5 # 0.8 # 0.1
         else:
             for z in itershape(self.shape):
                 self.neurons[z] = f(z)
@@ -736,7 +737,7 @@ class Filter(object):
         self.activity /= self.activity.sum()
         self._history = history is None and ConstantTimeseries(0.7) or history
         self.distances_ = []
-        print "map", self.map.shape
+        # print "map", self.map.shape
         self.sigmas = numpy.ones(self.map.shape + (self.map.dimension,))
 
     @property
