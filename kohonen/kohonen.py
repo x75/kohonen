@@ -423,7 +423,7 @@ class Map(object):
         self._learning_rate.reset()
         self._neighborhood_size.reset()
         if f is None:
-            self.neurons = rng.randn(*self.neurons.shape) * 1.0 # 0.1
+            self.neurons = rng.randn(*self.neurons.shape) * 0.3 # 0.1
         else:
             for z in itershape(self.shape):
                 self.neurons[z] = f(z)
