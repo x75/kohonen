@@ -152,7 +152,8 @@ class Parameters(object):
                  metric=None,
                  learning_rate=None,
                  neighborhood_size=None,
-                 noise_variance=None):
+                 noise_variance=None,
+                     init_variance = None):
         '''This class holds standard parameters for self-organizing maps.
 
         dimension: The length of a neuron vector in a Map or a Gas.
@@ -221,6 +222,9 @@ class Parameters(object):
         if isinstance(noise_variance, (float, int)):
             self.noise_variance = CT(noise_variance)
 
+        self.init_variance = init_variance
+        if self.init_variance is None:
+            self.init_variance = 1.0
 
 def heatmap(raw, axes=(0, 1), lower=None, upper=None):
     '''Create a heat map image from the given raw matrix.
@@ -383,6 +387,7 @@ class Map(object):
         self.dimension = params.dimension
         self.numunits  = numpy.prod(self._shape)
         self.neurons = _zeros(self.shape + (self.dimension, ))
+        self.prior   = numpy.ones(self.shape + (1, )) * 1./self.numunits
         # dimones = numpy.ones(self.shape + (self.dimension,))
         # self.neurons = _random(self.shape + (self.dimension, ), dtype = 'd', lo = dimones * -1.0, hi = dimones * 1.0)
         self.delta   = _zeros(self.shape + (self.dimension, ))
@@ -392,6 +397,7 @@ class Map(object):
         self._learning_rate = params.learning_rate
         self._neighborhood_size = params.neighborhood_size
         self._noise_variance = params.noise_variance
+        self._init_variance = params.init_variance
 
         # precompute a neighborhood mask for performing fast storage updates.
         # this mask is the same dimensionality as self.shape, but twice the size
@@ -424,7 +430,9 @@ class Map(object):
         self._neighborhood_size.reset()
         if f is None:
             # self.neurons = rng.randn(*self.neurons.shape) * 0.8 # 0.1
-            self.neurons = rng.uniform(-1.0, 1.0, self.neurons.shape) * 1.0 # 1.5 # 0.8 # 0.1
+            # self.neurons = rng.uniform(-1.0, 1.0, self.neurons.shape) * 1.0 # 1.5 # 0.8 # 0.1
+            # self.neurons = rng.uniform(-1.0, 1.0, self.neurons.shape) * 1.0 # for use in imol
+            self.neurons = rng.uniform(-1.0, 1.0, self.neurons.shape) * self._init_variance # for use in imol
         else:
             for z in itershape(self.shape):
                 self.neurons[z] = f(z)
@@ -507,7 +515,10 @@ class Map(object):
         # print "eta", eta
         # print "|delta|", eta * numpy.mean(numpy.abs(self.delta))
         dneurons = weights * self.delta
+        dprior   = weights
         self.neurons += eta * dneurons
+        self.prior   += eta * dprior
+        self.prior   /= sum(self.prior)
         if self._noise_variance:
             self.neurons += rng.normal(
                 0, self._noise_variance(), self.neurons.shape)
@@ -738,7 +749,7 @@ class Filter(object):
         self._history = history is None and ConstantTimeseries(0.7) or history
         self.distances_ = []
         # print "map", self.map.shape
-        self.sigmas = numpy.ones(self.map.shape + (self.map.dimension,))
+        self.sigmas = numpy.ones(self.map.shape + (self.map.dimension,)) * 0.1
 
     @property
     def shape(self):
