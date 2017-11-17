@@ -452,7 +452,7 @@ class Map(object):
         # maske sure that the input matches specified dimension, otherwise
         # resize will do folding
         if len(cue.shape) == 1:
-            assert cue.shape[0] == self.dimension
+            assert cue.shape[0] == self.dimension, "kohonen.distances assuming %s == %s" % (cue.shape[0], self.dimension)
         elif len(cue.shape) == 2:
             assert cue.shape[1] == self.dimension
         else:
