@@ -87,7 +87,7 @@ class Controller(object):
 
     def evaluate(self):
         return sum(self.quantizer.distances(self.source()).min()
-                   for _ in xrange(10)) / 10
+                   for _ in range(10)) / 10
 
     def draw_neurons(self, ctx, viewer):
         for c in kohonen.kohonen.itershape(self.quantizer.shape):
@@ -100,8 +100,8 @@ class Controller(object):
         if len(self.quantizer.shape) == 2:
             ctx.set_source_rgba(*(self.color + (0.25, )))
             ctx.set_line_width(0.5)
-            for x in xrange(0, self.quantizer.shape[0]):
-                for y in xrange(0, self.quantizer.shape[1]):
+            for x in range(0, self.quantizer.shape[0]):
+                for y in range(0, self.quantizer.shape[1]):
                     if x > 0:
                         ctx.move_to(*self.quantizer.neuron((x - 1, y)))
                         ctx.line_to(*self.quantizer.neuron((x, y)))
@@ -371,7 +371,7 @@ YELLOW = (0.7, 0.7, 0.3)
 
 
 if __name__ == '__main__':
-    print "enter main"
+    print("enter main")
     opts, args = FLAGS.parse_args()
 
     logging.basicConfig(stream=sys.stdout,
@@ -380,7 +380,7 @@ if __name__ == '__main__':
                         datefmt='%Y-%m-%d %H:%M:%S')
 
     ET = kohonen.kohonen.ExponentialTimeseries
-    print "ET", ET
+    print("ET", ET)
 
     def kwargs(shape=(10, 10), z=0.2):
         return dict(dimension=2,

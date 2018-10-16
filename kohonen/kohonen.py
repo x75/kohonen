@@ -240,7 +240,7 @@ def heatmap(raw, axes=(0, 1), lower=None, upper=None):
     Returns an annotated Image object (as returned from _image).
     '''
     assert len(axes) == 2
-    for ax in xrange(len(raw.shape) - 1, -1, -1):
+    for ax in range(len(raw.shape) - 1, -1, -1):
         if ax in axes:
             continue
         raw = raw.sum(axis=ax)
@@ -271,7 +271,7 @@ def colormap(raw, axes=(0, 1, 2), layers=(0, 1, 2)):
     Returns an Image object, as in the heatmap() function.
     '''
     assert len(axes) == len(layers) == 3
-    for ax in xrange(len(raw.shape) - 1, -1, -1):
+    for ax in range(len(raw.shape) - 1, -1, -1):
         if ax in axes:
             continue
         raw = raw.sum(axis=ax)
@@ -309,7 +309,7 @@ def _zeros(shape, dtype='d'):
 
 def _random(shape, dtype='d', lo = -1.0, hi = 1.0):
     '''Get a blank (all-zero) matrix with a certain shape.'''
-    print "lo", lo, "hi", hi, "shape", shape
+    print("lo", lo, "hi", hi, "shape", shape)
     return numpy.random.uniform(lo, hi, shape) # .astype(dtype)
 
 
@@ -318,7 +318,7 @@ def itershape(shape):
     if not shape:
         yield ()
         return
-    for i in xrange(shape[0]):
+    for i in range(shape[0]):
         for z in itershape(shape[1:]):
             yield (i, ) + z
 
